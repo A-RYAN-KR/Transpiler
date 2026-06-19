@@ -64,49 +64,9 @@ A full-stack, source-to-source compiler pipeline that transforms a subset of **J
 
 ## 🏗️ 2. Architecture
 
-```mermaid
-graph TD
-    %% Styling
-    classDef frontend fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
-    classDef backend fill:#181825,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4;
-    classDef compiler fill:#11111b,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4;
-    
-    subgraph Frontend ["🎨 Frontend (React + Vite)"]
-        monaco["Monaco Editor (Java Source)"]
-        tabs["Output Panel (Tabs: Output, Errors, Tokens, AST, Symbols)"]
-    end
-    
-    subgraph Backend ["⚙️ Backend (Express.js :3001)"]
-        router["POST /transpile"]
-        decision{"Binary present?"}
-        exe["C Compiler (transpiler.exe --json)"]
-        jsfallback["JS Transpiler (transpiler.js)"]
-    end
-    
-    subgraph Core ["🔧 Compiler Core (C + Flex + Bison)"]
-        lexer["Lexer (lexer.l - Flex)"]
-        parser["Parser (parser.y - Bison LALR(1))"]
-        ast["AST (ast.h / ast.c)"]
-        semantic["Semantic Analysis (semantic.c)"]
-        codegen["Code Generator (codegen.c)"]
-    end
-    
-    monaco -->|"POST /transpile {code, target}"| router
-    router --> decision
-    decision -->|"Yes"| exe
-    decision -->|"No"| jsfallback
-    
-    exe & jsfallback -->|"Run Pipeline"| lexer
-    lexer -->|"Token Stream"| parser
-    parser -->|"Abstract Syntax Tree"| ast
-    ast -->|"Type Check & Scope"| semantic
-    semantic -->|"Annotated AST"| codegen
-    codegen -->|"C or Python Code"| tabs
-    
-    class monaco,tabs frontend;
-    class router,decision,exe,jsfallback backend;
-    class lexer,parser,ast,semantic,codegen compiler;
-```
+<p align="center">
+  <img src="assets/Architecture%20Diagram.png" alt="TranspilerX Architecture" width="90%">
+</p>
 
 ---
 
@@ -136,21 +96,9 @@ graph TD
 
 ## ⚙️ 4. Compilation Pipeline Workflow
 
-```mermaid
-graph LR
-    classDef step fill:#1e1e2e,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4;
-    classDef data fill:#313244,stroke:#bac2de,stroke-dasharray: 5 5,color:#cdd6f4;
-    
-    src([Java Source Code]) --> phase1["Phase 1: Lexical Analysis<br/><i>lexer.l</i>"]
-    phase1 -->|"Tokens & Line No (yyline)"| phase2["Phase 2: Syntax Analysis<br/><i>parser.y</i>"]
-    phase2 -->|"Abstract Syntax Tree"| phase3["Phase 3: Semantic Analysis<br/><i>semantic.c</i>"]
-    phase3 -->|"Annotated AST & Symbols"| phase4["Phase 4: Code Generation<br/><i>codegen.c</i>"]
-    phase4 -->|"Target Code (C/Python)"| phase5["Phase 5: JSON Output<br/><i>main.c --json</i>"]
-    phase5 --> ui([UI Display / Tabs])
-
-    class phase1,phase2,phase3,phase4,phase5 step;
-    class src,ui data;
-```
+<p align="center">
+  <img src="assets/Pipeline.png" alt="Compilation Pipeline Workflow" width="90%">
+</p>
 
 ---
 
