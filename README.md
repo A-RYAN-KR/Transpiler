@@ -1,216 +1,220 @@
-# TranspilerX — Java to C/Python Transpiler
-## Complete Technical Documentation
+# 🚀 TranspilerX — Java to C/Python Transpiler
+
+A full-stack, source-to-source compiler pipeline that transforms a subset of **Java** source code into equivalent, optimized **C** or **Python** output.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
+[![Backend](https://img.shields.io/badge/backend-Express.js-lightgrey)]()
+[![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20Vite%20%2B%20Monaco-blue)]()
 
 ---
 
-## Table of Contents
+## ✨ Visual Showcase
 
-1. [Project Overview](#1-project-overview)
-2. [Architecture](#2-architecture)
-3. [Directory Structure](#3-directory-structure)
-4. [Compilation Pipeline Workflow](#4-compilation-pipeline-workflow)
-5. [Phase 1 — Lexical Analysis](#5-phase-1--lexical-analysis)
-6. [Phase 2 — Syntax Analysis Grammar](#6-phase-2--syntax-analysis-grammar)
-7. [Syntax-Directed Definitions SDD](#7-syntax-directed-definitions-sdd)
-8. [Syntax-Directed Translation SDT](#8-syntax-directed-translation-sdt)
-9. [Semantic Rules and Actions](#9-semantic-rules-and-actions)
-10. [Phase 4 — Code Generation](#10-phase-4--code-generation)
-11. [AST Node Taxonomy](#11-ast-node-taxonomy)
-12. [Frontend Architecture](#12-frontend-architecture)
-13. [Backend API](#13-backend-api)
+| 💻 Java to C Transpilation | 🐍 Java to Python Transpilation |
+| :---: | :---: |
+| ![Java to C](assets/JavaToC.png) | ![Java to Python](assets/JavaToPython.png) |
 
 ---
 
-## 1. Project Overview
+<details>
+  <summary><strong>📖 Table of Contents (Click to expand)</strong></summary>
+  <br/>
+
+  - [🔍 1. Project Overview](#1-project-overview)
+  - [🏗️ 2. Architecture](#2-architecture)
+  - [📁 3. Directory Structure](#3-directory-structure)
+  - [⚙️ 4. Compilation Pipeline Workflow](#4-compilation-pipeline-workflow)
+  - [🔤 5. Phase 1 — Lexical Analysis](#5-phase-1--lexical-analysis)
+  - [📊 6. Phase 2 — Syntax Analysis Grammar](#6-phase-2--syntax-analysis-grammar)
+  - [📐 7. Syntax-Directed Definitions (SDD)](#7-syntax-directed-definitions-sdd)
+  - [🎛️ 8. Syntax-Directed Translation (SDT)](#8-syntax-directed-translation-sdt)
+  - [🔒 9. Semantic Rules and Actions](#9-semantic-rules-and-actions)
+  - [💻 10. Phase 4 — Code Generation](#10-phase-4--code-generation)
+  - [🌳 11. AST Node Taxonomy](#11-ast-node-taxonomy)
+  - [🎨 12. Frontend Architecture](#12-frontend-architecture)
+  - [🔌 13. Backend API](#13-backend-api)
+</details>
+
+---
+
+## 🔍 1. Project Overview
 
 **TranspilerX** is a full-stack source-to-source compiler (transpiler) that accepts a subset of **Java** as input and produces equivalent code in either **C** or **Python**.
 
 | Property | Value |
 |---|---|
-| Source language | Java (subset) |
-| Target languages | C, Python |
-| Compiler core | C + Flex (lexer) + Bison (LALR parser) |
-| JS fallback | Node.js (mirrors C compiler pipeline) |
-| Frontend | React + Vite + Monaco Editor |
-| Backend API | Express.js (Node.js) |
+| **Source Language** | Java (subset) |
+| **Target Languages** | C, Python |
+| **Compiler Core** | C + Flex (lexer) + Bison (LALR parser) |
+| **JS Fallback** | Node.js (mirrors C compiler pipeline) |
+| **Frontend UI** | React + Vite + Monaco Editor |
+| **Backend API** | Express.js (Node.js) |
 
-### Supported Java Constructs
+### 🛠️ Supported Java Constructs
 
-- `class` declarations with access modifiers (`public`, `private`, `protected`)
-- Static methods with typed parameters — e.g. `public static int add(int a, int b)`
-- Typed variable declarations — `int x = 10;`, `String s = "hello";`
-- Control flow: `if / else if / else`, `while`, `for`
-- `System.out.println()` / `System.out.print()`
-- All arithmetic, relational, logical, and bitwise operators
-- Compound assignment: `+=`, `-=`, `*=`, `/=`
-- Postfix/prefix `++` / `--`
-- Arrays — `int[]`, `new int[n]`, `arr[i]`
-- Type casts — `(int) x`
-- Method/function calls — `obj.method(args)`, `func(args)`
+- **Object-Oriented Structures**: `class` declarations with access modifiers (`public`, `private`, `protected`) and static methods with typed parameters.
+- **Control Flow**: Conditional blocks (`if / else if / else`), and loops (`while`, `for`).
+- **Variables & Data Types**: Typed variable declarations (e.g., `int x = 10;`, `String s = "hello";`), type casts (e.g., `(int) x`), and method/function calls.
+- **Arrays**: Support for array types, allocation, and bracket-index slot accesses (e.g., `int[]`, `new int[n]`, `arr[i]`).
+- **Standard I/O**: Print actions via `System.out.println()` and `System.out.print()`.
+- **Operators**: Comprehensive set of arithmetic, relational, logical, bitwise, compound assignment (`+=`, `-=`, `*=`, `/=`), and increment/decrement (`++`, `--`) operations.
 
 ---
 
-## 2. Architecture
+## 🏗️ 2. Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    FRONTEND (React + Vite)               │
-│  ┌─────────────────┐     ┌────────────────────────────┐  │
-│  │  Monaco Editor  │     │   Output Panel (Tabs)      │  │
-│  │  Java source    │     │  Output | Errors | Tokens  │  │
-│  │  Syntax HL      │     │  AST    | Symbols          │  │
-│  └─────────────────┘     └────────────────────────────┘  │
-│              POST /transpile { code, target }             │
-├─────────────────────────────────────────────────────────┤
-│                  BACKEND (Express.js :3001)               │
-│  Binary present? → C compiler (transpiler.exe --json)    │
-│         else    → JS transpiler (transpiler.js)          │
-├─────────────────────────────────────────────────────────┤
-│              COMPILER CORE (C + Flex + Bison)            │
-│                                                          │
-│  Java Source                                             │
-│     │                                                    │
-│     ▼ lexer.l (Flex)                                     │
-│  Token Stream                                            │
-│     │                                                    │
-│     ▼ parser.y (Bison LALR(1))                           │
-│  Abstract Syntax Tree  (ast.h / ast.c)                   │
-│     │                                                    │
-│     ▼ semantic.c                                         │
-│  Annotated AST + Symbol Table + Error List               │
-│     │                                                    │
-│     ▼ codegen.c                                          │
-│  Generated C or Python Code                              │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## 3. Directory Structure
-
-```
-transpiler-project/
-├── compiler/
-│   ├── lexer.l          Flex lexer  — Java tokenizer
-│   ├── parser.y         Bison parser — Java grammar + SDD actions
-│   ├── ast.h / ast.c    AST node types, constructors, JSON serialiser
-│   ├── symtab.h/.c      Symbol table (scoped hash map)
-│   ├── semantic.h/.c    Semantic analysis pass (tree walk)
-│   ├── codegen.h/.c     Code generator  (Java → C / Python)
-│   ├── main.c           CLI entry point, JSON output mode
-│   └── Makefile         flex → bison → gcc build
-│
-├── backend/
-│   ├── server.js        Express API (/transpile, /health)
-│   └── transpiler.js    Pure-JS Java transpiler (fallback)
-│
-└── frontend/src/
-    ├── App.jsx          Main UI component
-    └── index.css        Dark-theme styles
+```mermaid
+graph TD
+    %% Styling
+    classDef frontend fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
+    classDef backend fill:#181825,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4;
+    classDef compiler fill:#11111b,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4;
+    
+    subgraph Frontend ["🎨 Frontend (React + Vite)"]
+        monaco["Monaco Editor (Java Source)"]
+        tabs["Output Panel (Tabs: Output, Errors, Tokens, AST, Symbols)"]
+    end
+    
+    subgraph Backend ["⚙️ Backend (Express.js :3001)"]
+        router["POST /transpile"]
+        decision{"Binary present?"}
+        exe["C Compiler (transpiler.exe --json)"]
+        jsfallback["JS Transpiler (transpiler.js)"]
+    end
+    
+    subgraph Core ["🔧 Compiler Core (C + Flex + Bison)"]
+        lexer["Lexer (lexer.l - Flex)"]
+        parser["Parser (parser.y - Bison LALR(1))"]
+        ast["AST (ast.h / ast.c)"]
+        semantic["Semantic Analysis (semantic.c)"]
+        codegen["Code Generator (codegen.c)"]
+    end
+    
+    monaco -->|"POST /transpile {code, target}"| router
+    router --> decision
+    decision -->|"Yes"| exe
+    decision -->|"No"| jsfallback
+    
+    exe & jsfallback -->|"Run Pipeline"| lexer
+    lexer -->|"Token Stream"| parser
+    parser -->|"Abstract Syntax Tree"| ast
+    ast -->|"Type Check & Scope"| semantic
+    semantic -->|"Annotated AST"| codegen
+    codegen -->|"C or Python Code"| tabs
+    
+    class monaco,tabs frontend;
+    class router,decision,exe,jsfallback backend;
+    class lexer,parser,ast,semantic,codegen compiler;
 ```
 
 ---
 
-## 4. Compilation Pipeline Workflow
+## 📁 3. Directory Structure
 
-```
-Java Source Code
-      │
-      │  PHASE 1 — LEXICAL ANALYSIS  (lexer.l)
-      ▼
-  Flex scans characters; matches regex patterns;
-  emits a token stream; tracks line numbers (yyline).
-      │
-      │  PHASE 2 — SYNTAX ANALYSIS   (parser.y)
-      ▼
-  Bison LALR(1) parser applies grammar productions.
-  Executes SDD semantic actions on each reduction.
-  Builds the Abstract Syntax Tree (AST).
-      │
-      │  PHASE 3 — SEMANTIC ANALYSIS (semantic.c)
-      ▼
-  Tree walk; scope management via SymbolTable stack;
-  declaration / use-before-declare checks;
-  type annotation on IDENT nodes.
-      │
-      │  PHASE 4 — CODE GENERATION   (codegen.c)
-      ▼
-  Second tree walk; target-specific emission;
-  class unwrapping; Java → C/Python mappings.
-      │
-      │  PHASE 5 — JSON OUTPUT        (main.c --json)
-      ▼
-  { success, ast, symbols, errors, output }
-      │
-      │  PHASE 6 — UI DISPLAY         (frontend)
-      ▼
-  Output / Tokens / AST / Symbols / Errors tabs
+```text
+📁 transpiler-project/
+├── 📂 compiler/             # Core C transpiler files
+│   ├── 📄 lexer.l          # Flex lexer specification (Java tokenizer)
+│   ├── 📄 parser.y         # Bison parser specification (Java grammar & SDT)
+│   ├── 📄 ast.h / ast.c    # AST definitions & JSON serializer
+│   ├── 📄 symtab.h / .c    # Scoped Symbol Table implementation
+│   ├── 📄 semantic.h / .c  # Type checking & semantic validation passes
+│   ├── 📄 codegen.h / .c   # Target code generation (C & Python emitters)
+│   ├── 📄 main.c           # Compiler CLI entry point with JSON output mode
+│   └── 📄 Makefile         # GNU Make script for building the binary
+├── 📂 backend/              # Node.js API Service
+│   ├── 📄 server.js        # Express API server (/transpile, /health)
+│   └── 📄 transpiler.js    # Pure Javascript transpiler fallback
+└── 📂 frontend/             # React SPA Interface
+    └── 📂 src/
+        ├── 📄 App.jsx      # Main React application component
+        └── 📄 index.css    # Global styling (Dark Mode)
 ```
 
 ---
 
-## 5. Phase 1 — Lexical Analysis
+## ⚙️ 4. Compilation Pipeline Workflow
+
+```mermaid
+graph LR
+    classDef step fill:#1e1e2e,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4;
+    classDef data fill:#313244,stroke:#bac2de,stroke-dasharray: 5 5,color:#cdd6f4;
+    
+    src([Java Source Code]) --> phase1["Phase 1: Lexical Analysis<br/><i>lexer.l</i>"]
+    phase1 -->|"Tokens & Line No (yyline)"| phase2["Phase 2: Syntax Analysis<br/><i>parser.y</i>"]
+    phase2 -->|"Abstract Syntax Tree"| phase3["Phase 3: Semantic Analysis<br/><i>semantic.c</i>"]
+    phase3 -->|"Annotated AST & Symbols"| phase4["Phase 4: Code Generation<br/><i>codegen.c</i>"]
+    phase4 -->|"Target Code (C/Python)"| phase5["Phase 5: JSON Output<br/><i>main.c --json</i>"]
+    phase5 --> ui([UI Display / Tabs])
+
+    class phase1,phase2,phase3,phase4,phase5 step;
+    class src,ui data;
+```
+
+---
+
+## 🔤 5. Phase 1 — Lexical Analysis
 
 ### Token Classes
 
 | Category | Tokens |
 |---|---|
-| Keywords | `class public private protected static void int double float long char boolean String if else while for return new true false null` |
-| Special | `System.out.println`  `System.out.print` (each matched as ONE token) |
-| Literals | `INT_LITERAL  DOUBLE_LIT  STRING_LIT  CHAR_LIT  BOOL_LIT` |
-| Identifiers | `[a-zA-Z_][a-zA-Z0-9_]*` |
-| Arithmetic | `PLUS MINUS TIMES DIVIDE MODULO` |
-| Relational | `EQ NEQ LT GT LTE GTE` |
-| Logical | `AND OR NOT` |
-| Bitwise | `BITAND BITOR BITXOR BITNOT SHL SHR` |
-| Increment | `INCREMENT DECREMENT` |
-| Compound | `PLUS_ASSIGN MINUS_ASSIGN TIMES_ASSIGN DIVIDE_ASSIGN` |
-| Delimiters | `LPAREN RPAREN LBRACE RBRACE LBRACKET RBRACKET COMMA SEMICOLON DOT` |
+| **Keywords** | `class public private protected static void int double float long char boolean String if else while for return new true false null` |
+| **Special Identifiers** | `System.out.println` and `System.out.print` *(each matched as a single token)* |
+| **Literals** | `INT_LITERAL`, `DOUBLE_LIT`, `STRING_LIT`, `CHAR_LIT`, `BOOL_LIT` |
+| **Identifiers** | `[a-zA-Z_][a-zA-Z0-9_]*` |
+| **Arithmetic Operators** | `PLUS`, `MINUS`, `TIMES`, `DIVIDE`, `MODULO` |
+| **Relational Operators** | `EQ`, `NEQ`, `LT`, `GT`, `LTE`, `GTE` |
+| **Logical Operators** | `AND`, `OR`, `NOT` |
+| **Bitwise Operators** | `BITAND`, `BITOR`, `BITXOR`, `BITNOT`, `SHL`, `SHR` |
+| **Increment/Decrement** | `INCREMENT`, `DECREMENT` |
+| **Compound Assignment** | `PLUS_ASSIGN`, `MINUS_ASSIGN`, `TIMES_ASSIGN`, `DIVIDE_ASSIGN` |
+| **Delimiters** | `LPAREN`, `RPAREN`, `LBRACE`, `RBRACE`, `LBRACKET`, `RBRACKET`, `COMMA`, `SEMICOLON`, `DOT` |
 
-### Key Regex Rules (lexer.l)
+### Key Regex Rules (`lexer.l`)
 
 ```lex
-"System.out.println"         → SYSOUT_PRINTLN   (matched before identifiers)
-"System.out.print"           → SYSOUT_PRINT
+"System.out.println"         /* -> SYSOUT_PRINTLN (matched before identifiers) */
+"System.out.print"           /* -> SYSOUT_PRINT */
 
-[a-zA-Z_][a-zA-Z0-9_]*      → keyword table lookup, else IDENTIFIER
+[a-zA-Z_][a-zA-Z0-9_]*       /* -> keyword table lookup, else IDENTIFIER */
 
-[0-9]+\.[0-9]+([fFdD])?     → DOUBLE_LIT   (atof)
-[0-9]+                       → INT_LITERAL  (atoi)
-\"([^"\\]|\\.)*\"            → STRING_LIT   (strdup, keeps quotes)
-\'([^'\\]|\\.)*\'            → CHAR_LIT     (yytext[1])
+[0-9]+\.[0-9]+([fFdD])?      /* -> DOUBLE_LIT (atof) */
+[0-9]+                       /* -> INT_LITERAL (atoi) */
+\"([^"\\]|\\.)*\"            /* -> STRING_LIT (strdup, keeps quotes) */
+\'([^'\\]|\\.)*\'            /* -> CHAR_LIT (yytext[1]) */
 
-"++" "--" "==" "!=" "<=" ">=" "&&" "||"
-"<<" ">>" "+=" "-=" "*=" "/="            → compound tokens (2-char first)
+"++" | "--" | "==" | "!=" | "<=" | ">=" | "&&" | "||" | "<<" | ">>" | "+=" | "-=" | "*=" | "/=" /* -> Compound operators */
 
-"//".*                        → skip (line comment)
-"/*" ... "*/"                 → skip (block comment, count \n)
-\n                            → yyline++
-[ \t\r]+                      → skip whitespace
+"//"                       { skip_line_comment(); }
+"/*"                       { skip_block_comment(); }
+\n                         { yyline++; }
+[ \t\r]+                   { /* skip whitespace */ }
 ```
 
 ---
 
-## 6. Phase 2 — Syntax Analysis Grammar
+## 📊 6. Phase 2 — Syntax Analysis Grammar
 
-Parser is **LALR(1)** generated by Bison. Operator precedence (lowest → highest):
+The parser is **LALR(1)** generated by Bison. Operator precedence rules (lowest to highest):
 
+```yacc
+%left  OR                     /* logical or               */
+%left  AND                    /* logical and              */
+%left  BITOR                  /* bitwise or               */
+%left  BITXOR                 /* bitwise xor              */
+%left  BITAND                 /* bitwise and              */
+%left  EQ  NEQ                /* equality comparison      */
+%left  LT  GT  LTE  GTE       /* relational comparison    */
+%left  SHL  SHR               /* bitwise shift            */
+%left  PLUS  MINUS            /* additive                 */
+%left  TIMES  DIVIDE  MODULO  /* multiplicative           */
+%right NOT  BITNOT            /* unary logical/bitwise    */
+%right UMINUS                 /* unary minus (highest)    */
 ```
-%left  OR                     logical or
-%left  AND                    logical and
-%left  BITOR                  bitwise or
-%left  BITXOR                 bitwise xor
-%left  BITAND                 bitwise and
-%left  EQ  NEQ                equality
-%left  LT  GT  LTE  GTE       relational
-%left  SHL  SHR               shift
-%left  PLUS  MINUS            additive
-%left  TIMES  DIVIDE  MODULO  multiplicative
-%right NOT  BITNOT            unary prefix
-%right UMINUS                 unary minus (highest)
-```
 
-### Grammar (BNF)
+### Grammar Specification (BNF)
 
 ```bnf
 program       ::= class_list | statement_list
@@ -272,24 +276,27 @@ primary       ::= literal
 
 ---
 
-## 7. Syntax-Directed Definitions (SDD)
+## 📐 7. Syntax-Directed Definitions (SDD)
 
-An **SDD** attaches synthesized attributes to every non-terminal. Here `$$` is always `ASTNode*` except for `type_spec` (returns `JavaType` enum) and `opt_access_mod` / `opt_static` (return `int`).
+An **SDD** attaches synthesized attributes to every non-terminal. In this implementation, `$$` evaluates to `ASTNode*` except for flags and specific enum outputs.
+
+> [!NOTE]
+> - `type_spec` returns a `JavaType` enum value.
+> - `opt_access_mod` and `opt_static` return primitive flags / enums.
 
 ### Attribute Table
 
 | Non-terminal | Attribute Type | Meaning |
 |---|---|---|
-| `program`, `class_list`, `statement_list` | `ASTNode*` | Root / list node |
-| `class_decl`, `method_decl`, `field_decl` | `ASTNode*` | Declaration node |
-| `statement`, `block`, `expr_stmt` | `ASTNode*` | Statement node |
-| `expression`, `primary`, `postfix_expr` | `ASTNode*` | Expression node |
+| `program`, `class_list`, `statement_list` | `ASTNode*` | Root or list nodes |
+| `class_decl`, `method_decl`, `field_decl` | `ASTNode*` | Declaration nodes |
+| `statement`, `block`, `expr_stmt` | `ASTNode*` | Statement nodes |
+| `expression`, `primary`, `postfix_expr` | `ASTNode*` | Expression nodes |
 | `type_spec` | `int` (JavaType enum) | Java type constant |
-| `opt_access_mod`, `access_mod` | `int` (AccessMod enum) | Access level |
-| `opt_static` | `int` 0 or 1 | Static flag |
-| `typed_param` | `ASTNode*` | Typed parameter node |
-| `opt_param_list`, `param_list` | `ASTNode*` | Param list node |
-| `opt_arg_list`, `arg_list` | `ASTNode*` | Arg list node |
+| `opt_access_mod`, `access_mod` | `int` (AccessMod enum) | Access level modifier |
+| `opt_static` | `int` | Static flag (0 or 1) |
+| `typed_param`, `opt_param_list`, `param_list` | `ASTNode*` | Parameter metadata nodes |
+| `opt_arg_list`, `arg_list` | `ASTNode*` | Argument lists |
 
 ### SDD Rules — Class & Method
 
@@ -308,7 +315,7 @@ An **SDD** attaches synthesized attributes to every non-terminal. Here `$$` is a
 
 ### SDD Rules — Type Specification
 
-| Production | `$$` value |
+| Production | `$$` Value |
 |---|---|
 | `type_spec → int` | `JTYPE_INT` |
 | `type_spec → double` | `JTYPE_DOUBLE` |
@@ -324,7 +331,7 @@ An **SDD** attaches synthesized attributes to every non-terminal. Here `$$` is a
 
 ### SDD Rules — Statements
 
-| Production | `$$` |
+| Production | `$$` Assignment / Node Mapping |
 |---|---|
 | `var_decl → type id = expr ;` | `ast_new_var_decl(id, type, expr, line)` |
 | `var_decl → type id ;` | `ast_new_var_decl(id, type, NULL, line)` |
@@ -344,9 +351,9 @@ An **SDD** attaches synthesized attributes to every non-terminal. Here `$$` is a
 | `print → System.out.println(e);` | `ast_new_print(e, line)` |
 | `print → System.out.println();` | `ast_new_print(StrLit("\"\""), line)` |
 
-### SDD Rules — For-Update (desugared)
+### SDD Rules — For-Update (Desugared)
 
-| Production | `$$` desugaring |
+| Production | `$$` Desugaring Structure |
 |---|---|
 | `for_update → id++` | `Assign(id, BinOp(ADD, Ident(id), IntLit(1)))` |
 | `for_update → id--` | `Assign(id, BinOp(SUB, Ident(id), IntLit(1)))` |
@@ -355,7 +362,7 @@ An **SDD** attaches synthesized attributes to every non-terminal. Here `$$` is a
 
 ### SDD Rules — Expressions
 
-| Production | `$$` |
+| Production | `$$` Constructor Call |
 |---|---|
 | `expr → expr + expr` | `ast_new_binop(OP_ADD, left, right, line)` |
 | `expr → expr - expr` | `ast_new_binop(OP_SUB, ...)` |
@@ -383,7 +390,7 @@ An **SDD** attaches synthesized attributes to every non-terminal. Here `$$` is a
 
 ### SDD Rules — Primary
 
-| Production | `$$` |
+| Production | `$$` Constructor Call |
 |---|---|
 | `primary → INT_LITERAL` | `ast_new_int_lit(ival, line)` |
 | `primary → DOUBLE_LIT` | `ast_new_double_lit(dval, line)` |
@@ -400,9 +407,9 @@ An **SDD** attaches synthesized attributes to every non-terminal. Here `$$` is a
 
 ---
 
-## 8. Syntax-Directed Translation (SDT)
+## 🎛️ 8. Syntax-Directed Translation (SDT)
 
-An **SDT** embeds semantic actions *inside* productions. Bison fires each action when the production is **reduced**. The key translations in our system are shown below with the action code.
+An **SDT** embeds semantic actions directly within grammatical productions. Bison executes these actions when a rule is **reduced**. Below are the primary compiler-action rules:
 
 ### SDT Scheme — Class Declaration
 
@@ -440,8 +447,8 @@ assign_stmt:
     IDENTIFIER PLUS_ASSIGN expression SEMICOLON
     {
         /*  id += e  is translated inline to  id = id + e
-            A fresh Ident node is created for the LHS of BinOp
-            so the tree does not share pointers.             */
+           A fresh Ident node is created for the LHS of BinOp
+           so the tree does not share pointers.             */
         $$ = ast_new_assign($1,
             ast_new_binop(OP_ADD,
                 ast_new_ident(strdup($1), yyline),   /* fresh copy */
@@ -450,7 +457,7 @@ assign_stmt:
     }
 ```
 
-### SDT Scheme — For-Update (i++ → assignment)
+### SDT Scheme — For-Update (`i++` → assignment)
 
 ```yacc
 for_update:
@@ -519,129 +526,105 @@ print_stmt:
 
 ---
 
-## 9. Semantic Rules and Actions
+## 🔒 9. Semantic Rules and Actions
 
-The semantic phase is a **post-parse depth-first tree walk** in `semantic.c`. It uses a **linked chain of hash-map scopes** (`SymbolTable`) to track all identifiers.
+The semantic validation step is a **post-parse, depth-first tree walk** defined in `semantic.c`. It leverages a **linked chain of scoped hash maps** (`SymbolTable`) for identifier resolution.
 
 ### 9.1 Symbol Table Layout
 
 ```c
 typedef struct Symbol {
-    char       *name;           /* identifier name (heap)        */
-    SymbolType  type;           /* SYM_VARIABLE | SYM_FUNCTION
-                                   | SYM_CLASS                   */
-    JavaType    java_type;      /* JTYPE_INT, JTYPE_STRING, ...  */
-    int         param_count;    /* number of params (functions)  */
-    int         line_declared;  /* for error messages            */
-    int         is_static;      /* static flag                   */
-    AccessMod   access;         /* public/private/protected      */
-    struct Symbol *next;        /* hash chain (separate chaining)*/
+    char       *name;           /* identifier name (heap allocated) */
+    SymbolType  type;           /* SYM_VARIABLE | SYM_FUNCTION | SYM_CLASS */
+    JavaType    java_type;      /* JTYPE_INT, JTYPE_STRING, etc. */
+    int         param_count;    /* parameter count (functions) */
+    int         line_declared;  /* source declaration line */
+    int         is_static;      /* static attribute boolean */
+    AccessMod   access;         /* public/private/protected access */
+    struct Symbol *next;        /* hash chain (separate chaining) */
 } Symbol;
 
 typedef struct SymbolTable {
-    Symbol      *buckets[211];  /* djb2 hash, 211 buckets        */
-    SymbolTable *parent;        /* enclosing scope               */
+    Symbol      *buckets[211];  /* djb2 hash, 211 buckets */
+    SymbolTable *parent;        /* enclosing scope pointer */
 } SymbolTable;
 ```
 
-**Lookup** chains through `parent` pointers until a match is found or the global scope is exhausted.
+**Lookup** traverses the parent pointers upward until an identifier is found or the global scope is exhausted.
 
 ### 9.2 Scope Management
 
-| Event | Action |
+| Scope Trigger Event | Action taken |
 |---|---|
-| Program start | Create global `SymbolTable`; set `current_scope = global` |
-| Enter `ClassDecl` | `push(new SymbolTable(parent=current_scope))` |
-| Exit `ClassDecl` | `pop(); destroy class scope` |
-| Enter `MethodDecl` | `push(new SymbolTable(parent=class_scope))` |
-| Insert each parameter | `symtab_insert(method_scope, param.name, SYM_VARIABLE, param.java_type, ...)` |
-| Exit `MethodDecl` | `pop(); destroy method scope` |
-| Enter/Exit `block` | *(no extra scope — Java block scoping simplified to method scope)* |
+| **Program Start** | Create global `SymbolTable`; set `current_scope = global` |
+| **Enter `ClassDecl`** | `push(new SymbolTable(parent=current_scope))` |
+| **Exit `ClassDecl`** | `pop();` destroy class scope |
+| **Enter `MethodDecl`** | `push(new SymbolTable(parent=class_scope))` |
+| **Insert Parameters** | `symtab_insert(method_scope, param.name, SYM_VARIABLE, param.java_type, ...)` |
+| **Exit `MethodDecl`** | `pop();` destroy method scope |
+| **Enter/Exit `block`** | Simplified: mapped directly to enclosing method scope |
 
-### 9.3 Semantic Rules (Formal Specification)
+---
 
-#### SR-1 — No Duplicate Class Declaration
+### 📋 9.3 Semantic Rules (Formal Specification)
 
-```
-WHERE   : node.type == CLASS_DECL
-PRE     : symtab_lookup_local(current_scope, node.name) == NULL
-ACTION  : symtab_insert(current_scope, node.name, SYM_CLASS,
-                        JTYPE_UNKNOWN, 0, node.line)
-ERROR   : "Class 'X' already declared (line N)"
-```
+> [!IMPORTANT]
+> Semantic checking runs post-parse to guarantee standard Java static rules are validated.
 
-#### SR-2 — No Duplicate Method
+#### 🔴 SR-1 — No Duplicate Class Declaration
+- **Context (`WHERE`)**: `node.type == NODE_CLASS_DECL`
+- **Precondition (`PRE`)**: `symtab_lookup_local(current_scope, node.name) == NULL`
+- **Action (`ACTION`)**: `symtab_insert(current_scope, node.name, SYM_CLASS, JTYPE_UNKNOWN, 0, node.line)`
+- **Violation Error**: `"Class 'X' already declared (line N)"`
 
-```
-WHERE   : node.type == METHOD_DECL
-PRE     : symtab_lookup_local(current_scope, node.name) == NULL
-ACTION  : sym = symtab_insert(scope, name, SYM_FUNCTION,
-                              returnType, paramCount, line)
-          sym→is_static = node.is_static
-          sym→access    = node.access
-ERROR   : "Method 'X' already declared (line N)"
-```
+#### 🔴 SR-2 — No Duplicate Method
+- **Context (`WHERE`)**: `node.type == NODE_METHOD_DECL`
+- **Precondition (`PRE`)**: `symtab_lookup_local(current_scope, node.name) == NULL`
+- **Action (`ACTION`)**: 
+  ```c
+  sym = symtab_insert(scope, name, SYM_FUNCTION, returnType, paramCount, line);
+  sym->is_static = node.is_static;
+  sym->access = node.access;
+  ```
+- **Violation Error**: `"Method 'X' already declared (line N)"`
 
-#### SR-3 — No Duplicate Variable in Same Scope
+#### 🔴 SR-3 — No Duplicate Variable in Same Scope
+- **Context (`WHERE`)**: `node.type == NODE_VAR_DECL`
+- **Precondition (`PRE`)**: `symtab_lookup_local(current_scope, node.name) == NULL`
+- **Action (`ACTION`)**: `symtab_insert(scope, name, SYM_VARIABLE, node.java_type, 0, line)`
+- **Violation Error**: `"Variable 'X' already declared in this scope (line N)"`
 
-```
-WHERE   : node.type == VAR_DECL
-PRE     : symtab_lookup_local(current_scope, node.name) == NULL
-ACTION  : sym = symtab_insert(scope, name, SYM_VARIABLE,
-                              node.java_type, 0, line)
-ERROR   : "Variable 'X' already declared in this scope (line N)"
-```
+#### 🔴 SR-4 — Variable Must Be Declared Before Use
+- **Context (`WHERE`)**: `node.type == NODE_IDENT` *(inside expressions)*
+- **Precondition (`PRE`)**: `symtab_lookup(current_scope, node.name) != NULL`
+- **Action (`ACTION`)**: `node->java_type = sym->java_type` *(type annotation)*
+- **Violation Error**: `"Undeclared identifier 'X'"`
 
-#### SR-4 — Variable Must Be Declared Before Use
+#### 🔴 SR-5 — Assignment Target Checks
+- **Context (`WHERE`)**: `node.type == NODE_ASSIGN`
+- **Check 1**: `symtab_lookup(scope, node.name) != NULL` (Undeclared error)
+- **Check 2**: `sym->type != SYM_FUNCTION` (Cannot assign to method error)
 
-```
-WHERE   : node.type == IDENT  (inside any expression)
-PRE     : symtab_lookup(current_scope, node.name) != NULL
-ACTION  : node→java_type = sym→java_type   ← TYPE ANNOTATION
-ERROR   : "Undeclared identifier 'X'"
-```
+#### 🔴 SR-6 — Function Call Arity and Name Check
+- **Context (`WHERE`)**: `node.type == NODE_FUNC_CALL`
+- **Check 1**: `symtab_lookup(scope, node.name) != NULL` (Undeclared method)
+- **Check 2**: `sym->type == SYM_FUNCTION` (Not a method)
+- **Check 3**: `actual_arg_count == sym->param_count` (Expects N arguments, got M)
 
-#### SR-5 — Assignment Target Must Exist and Not Be a Function
+#### 🔴 SR-7 — Array Subscript Pre-declaration Check
+- **Context (`WHERE`)**: `node.type == NODE_ARRAY_ACCESS`
+- **Precondition**: `symtab_lookup(scope, node.name) != NULL`
+- **Violation Error**: `"Undeclared array 'X'"`
 
-```
-WHERE   : node.type == ASSIGN
-CHECK 1 : symtab_lookup(scope, node.name) != NULL
-CHECK 2 : sym→type != SYM_FUNCTION
-ERROR 1 : "Undeclared variable 'X'"
-ERROR 2 : "Cannot assign to method 'X'"
-```
+#### 🔴 SR-8 — Object Method Calls
+- **Context (`WHERE`)**: `node.type == NODE_METHOD_CALL`
+- **Behavior**: Recursively analyze all call arguments; skip parent object validation (open-world runtime lookup assumption).
 
-#### SR-6 — Function Call Arity and Name Check
-
-```
-WHERE   : node.type == FUNC_CALL
-CHECK 1 : symtab_lookup(scope, node.name) != NULL
-CHECK 2 : sym→type == SYM_FUNCTION
-CHECK 3 : actual_arg_count == sym→param_count
-ERROR 1 : "Undeclared method 'X'"
-ERROR 2 : "'X' is not a method"
-ERROR 3 : "Method 'X' expects N arguments, got M"
-```
-
-#### SR-7 — Array Must Be Declared Before Subscript
-
-```
-WHERE   : node.type == ARRAY_ACCESS
-CHECK   : symtab_lookup(scope, node.name) != NULL
-ERROR   : "Undeclared array 'X'"
-```
-
-#### SR-8 — Method Calls on Objects (open-world)
-
-```
-WHERE   : node.type == METHOD_CALL
-ACTION  : Recursively analyse all arguments; NO object lookup
-REASON  : Library / runtime types cannot be resolved at compile time
-```
+---
 
 ### 9.4 Type Annotation
 
-SR-4 propagates the declared type from the symbol table onto every `NODE_IDENT` node:
+`SR-4` propagates the declared type onto the `NODE_IDENT` tree nodes:
 
 ```c
 case NODE_IDENT: {
@@ -654,43 +637,43 @@ case NODE_IDENT: {
 }
 ```
 
-The code generator later reads `java_type` to choose the correct `printf` format specifier.
+This annotated type information is read by the code generator to select appropriate printf specifiers.
 
 ### 9.5 Error Strategy
 
-Errors are **non-fatal**. The analyser collects up to `MAX_ERRORS = 100` and continues walking the tree, so all errors in a file are reported in one pass. Code generation is **blocked** when `error_count > 0`.
+The semantic parser implements **non-fatal error collection** (up to `MAX_ERRORS = 100`). It continues structural checks after an error occurs to capture all warnings/errors in a single run. Code generation is blocked if `error_count > 0`.
 
 ```c
 typedef struct SemanticResult {
-    SemanticError errors[MAX_ERRORS];   /* {line, message[256]} */
+    SemanticError errors[MAX_ERRORS];   /* array of {line, message[256]} */
     int           error_count;
-    SymbolTable  *global_scope;         /* used for JSON /symbols export */
+    SymbolTable  *global_scope;         /* global context mapping */
 } SemanticResult;
 ```
 
 ---
 
-## 10. Phase 4 — Code Generation
+## 💻 10. Phase 4 — Code Generation
 
 ### 10.1 Java Type → C Type
 
-| Java | C |
+| Java Type | C Core Representation |
 |---|---|
 | `int` | `int` |
 | `long` | `long` |
 | `double` | `double` |
 | `float` | `float` |
 | `char` | `char` |
-| `boolean` | `int` (C has no native bool) |
+| `boolean` | `int` *(C has no native boolean type)* |
 | `String` | `const char*` |
 | `void` | `void` |
 | `int[]` | `int*` |
 | `double[]` | `double*` |
 | `String[]` | `const char**` |
 
-### 10.2 Java Type → Python Hint
+### 10.2 Java Type → Python Type Hint
 
-| Java | Python |
+| Java Type | Python Hint Representation |
 |---|---|
 | `int`, `long` | `int` |
 | `double`, `float` | `float` |
@@ -699,11 +682,11 @@ typedef struct SemanticResult {
 | `String` | `str` |
 | Arrays | `list` |
 
-### 10.3 printf Format Specifier (C target)
+### 10.3 printf Format Specifiers (C Output)
 
-Inferred from `infer_type(expr_node)` which reads `java_type`:
+Specifier logic is evaluated dynamically based on `infer_type(expr_node)`:
 
-| Java Type | Format |
+| Java Type | Format Specifier |
 |---|---|
 | `int`, `boolean` | `%d` |
 | `long` | `%ld` |
@@ -711,9 +694,9 @@ Inferred from `infer_type(expr_node)` which reads `java_type`:
 | `char` | `%c` |
 | `String` | `%s` |
 
-### 10.4 Control Flow Translation
+### 10.4 Control Flow Mappings
 
-| Java | C output | Python output |
+| Java Structure | C Target Output | Python Target Output |
 |---|---|---|
 | `if (c) { }` | `if (c) { }` | `if c:` |
 | `else if (c) { }` | `else if (c) { }` | `elif c:` |
@@ -721,9 +704,10 @@ Inferred from `infer_type(expr_node)` which reads `java_type`:
 | `while (c) { }` | `while (c) { }` | `while c:` |
 | `for (int i=0; i<n; i++) {}` | `for (int i=0; (i<n); i=(i+1)) {}` | `i=0` → `while (i<n):` → `i=(i+1)` |
 
-> **Python for-loop:** Java's C-style `for` has no direct Python equivalent. The transpiler emits an init statement followed by a `while` loop and appends the update at the end of the body.
+> [!TIP]
+> **Python Loop Desugaring**: Java's C-style `for` loop has no direct Python equivalent. The transpiler desugars it into a block consisting of an initialization statement, a `while` loop, and appends the loop update statement at the end of the `while` body.
 
-### 10.5 Literal and Keyword Translation
+### 10.5 Literal and Keyword Mappings
 
 | Java | C | Python |
 |---|---|---|
@@ -734,7 +718,7 @@ Inferred from `infer_type(expr_node)` which reads `java_type`:
 | `(double) x` | `(double)(x)` | `float(x)` |
 | `(int) x` | `(int)(x)` | `int(x)` |
 
-### 10.6 logical Operator Translation
+### 10.6 Logical Operator Mappings
 
 | Java | C | Python |
 |---|---|---|
@@ -742,26 +726,28 @@ Inferred from `infer_type(expr_node)` which reads `java_type`:
 | `\|\|` | `\|\|` | `or` |
 | `!` | `!` | `not ` |
 
-### 10.7 Class Unwrapping (Java → C)
+### 10.7 Class Unwrapping (Java → Flat C Target)
 
-Java classes are **structural containers** — they become flat functions in C.
+Java classes serve as namespace containers. The backend flattens them into direct C declarations:
 
-```
+```text
 ALGORITHM:
 1. For each ClassDecl in AST:
-   a. First pass  → emit non-main static methods as C functions
-   b. Static fields → global variable declarations
-   c. Second pass → emit main() with signature:
-                    void main(int argc, char *argv[])
-                    + inject  return 0;  at end
-2. Non-class (loose) statements → wrap in   int main() { ... }
+   a. First pass  → Emit non-main static methods as flat C functions.
+   b. Static fields → Map as global variables.
+   c. Second pass → Emit main() with C signature:
+                    "void main(int argc, char *argv[])"
+                    + Automatically append a "return 0;" statement.
+2. Non-class (loose) statements → Wrap immediately in "int main() { ... }"
 ```
 
-**Example:**
+#### Transpilation Example
 
 ```java
 public class Calc {
-    public static int add(int a, int b) { return a + b; }
+    public static int add(int a, int b) { 
+        return a + b; 
+    }
     public static void main(String[] args) {
         System.out.println(add(1, 2));
     }
@@ -796,130 +782,135 @@ if __name__ == "__main__":
 
 ---
 
-## 11. AST Node Taxonomy
+## 🌳 11. AST Node Taxonomy
 
-### Complete Node Type Table
+### Node Type System
 
 | Node Type | Key Fields | Description |
 |---|---|---|
 | `NODE_PROGRAM` | `items[]` | Top-level list |
-| `NODE_STMT_LIST` | `items[]`, `item_count` | Generic node list |
-| `NODE_CLASS_DECL` | `name`, `access`, `body` | Java class |
-| `NODE_METHOD_DECL` | `name`, `java_type`, `access`, `is_static`, `left`(params), `body` | Java method |
-| `NODE_VAR_DECL` | `name`, `java_type`, `access`, `is_static`, `left`(init) | Typed variable declaration |
-| `NODE_ASSIGN` | `name`, `left`(value) | Assignment |
-| `NODE_IF` | `left`(cond), `body`(then), `right`(else or elif) | Conditional |
+| `NODE_STMT_LIST` | `items[]`, `item_count` | Generic statement/node collection |
+| `NODE_CLASS_DECL` | `name`, `access`, `body` | Class declaration metadata |
+| `NODE_METHOD_DECL` | `name`, `java_type`, `access`, `is_static`, `left`(params), `body` | Method declaration metadata |
+| `NODE_VAR_DECL` | `name`, `java_type`, `access`, `is_static`, `left`(init) | Variable declaration |
+| `NODE_ASSIGN` | `name`, `left`(value) | Variable assignment |
+| `NODE_IF` | `left`(cond), `body`(then), `right`(else/elif) | Conditional block |
 | `NODE_WHILE` | `left`(cond), `body` | While loop |
 | `NODE_FOR` | `init`, `left`(cond), `update`, `body` | For loop |
-| `NODE_RETURN` | `left`(expr or NULL) | Return |
-| `NODE_PRINT` | `left`(expr) | System.out.println |
-| `NODE_EXPR_STMT` | `left`(expr) | Expression as statement |
-| `NODE_BINOP` | `op`, `left`, `right` | Binary operation |
-| `NODE_UNARYOP` | `op`, `left` | Unary operation |
-| `NODE_INT_LIT` | `int_val` | Integer literal |
-| `NODE_DOUBLE_LIT` | `num_val` | Double literal |
-| `NODE_STR_LIT` | `name` (with `"`) | String literal |
-| `NODE_CHAR_LIT` | `int_val` (char as int) | Char literal |
-| `NODE_BOOL_LIT` | `int_val` (0 or 1) | Boolean literal |
-| `NODE_IDENT` | `name`, `java_type` (annotated) | Identifier |
-| `NODE_FUNC_CALL` | `name`, `left`(args) | Function call |
-| `NODE_METHOD_CALL` | `name` ("obj.method"), `left`(args) | Method call |
-| `NODE_ARRAY_ACCESS` | `name`, `left`(index), `right`(value if LHS) | Array subscript |
-| `NODE_NEW_ARRAY` | `java_type`, `left`(size) | Array allocation |
-| `NODE_CAST` | `java_type`, `left`(expr) | Type cast |
-| `NODE_TYPED_PARAM` | `name`, `java_type` | Method parameter |
+| `NODE_RETURN` | `left`(expr/NULL) | Return statement |
+| `NODE_PRINT` | `left`(expr) | Print instruction |
+| `NODE_EXPR_STMT` | `left`(expr) | Plain expression evaluated as a statement |
+| `NODE_BINOP` | `op`, `left`, `right` | Binary math/relational node |
+| `NODE_UNARYOP` | `op`, `left` | Unary expression node |
+| `NODE_INT_LIT` | `int_val` | Integer value |
+| `NODE_DOUBLE_LIT` | `num_val` | Floating-point value |
+| `NODE_STR_LIT` | `name` (with quotes) | String value |
+| `NODE_CHAR_LIT` | `int_val` | Char representation |
+| `NODE_BOOL_LIT` | `int_val` (0/1) | Boolean mapping |
+| `NODE_IDENT` | `name`, `java_type` (annotated) | Symbol reference |
+| `NODE_FUNC_CALL` | `name`, `left`(arguments) | Routine call |
+| `NODE_METHOD_CALL` | `name` ("obj.method"), `left`(arguments) | Method accessor call |
+| `NODE_ARRAY_ACCESS` | `name`, `left`(index), `right`(value if LHS) | Subscript array slot read/write |
+| `NODE_NEW_ARRAY` | `java_type`, `left`(size) | Dynamic array instance alloc |
+| `NODE_CAST` | `java_type`, `left`(expr) | Type coercion node |
+| `NODE_TYPED_PARAM` | `name`, `java_type` | Parameter template metadata |
 
-### AST Example — `int x = add(a, b);`
+---
 
+### AST Visualizations
+
+#### AST Example — `int x = add(a, b);`
+
+```text
+VarDecl (name="x", java_type=JTYPE_INT)
+└── 📁 left: FuncCall (name="add")
+    └── 📁 left: StmtList (arguments)
+        ├── 📄 [0]: Identifier (name="a", java_type=JTYPE_INT)
+        └── 📄 [1]: Identifier (name="b", java_type=JTYPE_INT)
 ```
-VarDecl  name="x"  javaType=JTYPE_INT
-  └─ left: FuncCall  name="add"
-             └─ left: StmtList (args)
-                  ├─ [0] Identifier  name="a"  javaType=JTYPE_INT
-                  └─ [1] Identifier  name="b"  javaType=JTYPE_INT
-```
 
-### AST Example — `for (int i = 0; i < n; i++) { ... }`
+#### AST Example — `for (int i = 0; i < n; i++) { ... }`
 
-```
+```text
 For
- ├─ init:   VarDecl  name="i"  javaType=JTYPE_INT
- │            └─ left: IntLit  value=0
- │
- ├─ left:   BinOp  op=OP_LT
- │            ├─ left:  Identifier  name="i"
- │            └─ right: Identifier  name="n"
- │
- ├─ update: Assign  name="i"
- │            └─ left: BinOp  op=OP_ADD
- │                      ├─ left:  Identifier  name="i"
- │                      └─ right: IntLit  value=1
- │
- └─ body:   StmtList
-              └─ ...
+├── ⚙️ init: VarDecl (name="i", java_type=JTYPE_INT)
+│            └── 📁 left: IntLit (value=0)
+│
+├── ⚙️ left (condition): BinOp (op=OP_LT)
+│                       ├── 📄 left: Identifier (name="i")
+│                       └── 📄 right: Identifier (name="n")
+│
+├── ⚙️ update: Assign (name="i")
+│             └── 📁 left: BinOp (op=OP_ADD)
+│                         ├── 📄 left: Identifier (name="i")
+│                         └── 📄 right: IntLit (value=1)
+│
+└── 📁 body: StmtList
+             └── ...
 ```
 
-### AST Example — `if (x > 0) { ... } else { ... }`
+#### AST Example — `if (x > 0) { ... } else { ... }`
 
-```
+```text
 If
- ├─ left (cond):  BinOp  op=OP_GT
- │                  ├─ Identifier  name="x"
- │                  └─ IntLit  value=0
- ├─ body (then):  StmtList  [...]
- └─ right (else): StmtList  [...]
+├── ⚙️ left (condition): BinOp (op=OP_GT)
+│                       ├── 📄 Identifier (name="x")
+│                       └── 📄 IntLit (value=0)
+├── 📁 body (then): StmtList [...]
+└── 📁 right (else): StmtList [...]
 ```
 
 ---
 
-## 12. Frontend Architecture
+## 🎨 12. Frontend Architecture
 
-```
+```text
 App.jsx
- ├── State
- │    ├── code       Java source string
- │    ├── target     "python" | "c"
- │    ├── result     { success, tokens, ast, symbols, errors, output }
- │    ├── loading    boolean
- │    └── activeTab  "output"|"errors"|"tokens"|"ast"|"symbols"
- │
- ├── handleTranspile()
- │    └── POST /transpile { code, target }
- │         sets result state; switches to output or errors tab
- │
- ├── Monaco Editor
- │    └── defaultLanguage = "java"   (full Java syntax highlighting)
- │         fontFamily     = JetBrains Mono
- │         features: bracket-pair coloring, smooth caret, line highlight
- │
- ├── ASTTreeView  (recursive component)
- │    ├── node.type          → cyan label
- │    ├── node.name          → orange text
- │    ├── node.javaType      → small orange annotation  ": int"
- │    ├── node.value         → green (literals)
- │    ├── node.op            → red (operators)
- │    └── recurses into: left, right, body, init, update, items[]
- │
- └── Tabs
-      ├── Output   monospace generated code
-      ├── Errors   line number + message list
-      ├── Tokens   grid: type | value | line
-      ├── AST      recursive ASTTreeView
-      └── Symbols  table: Name | Kind | Java Type | Params | Line
+├── 💾 State Management
+│   ├── code       # Java source string
+│   ├── target     # "python" | "c"
+│   ├── result     # { success, tokens, ast, symbols, errors, output }
+│   ├── loading    # boolean
+│   └── activeTab  # "output" | "errors" | "tokens" | "ast" | "symbols"
+│
+├── ⚙️ API Integration
+│   └── handleTranspile() -> POST /transpile { code, target }
+│
+├── 💻 Monaco Editor Instance
+│   ├── Language: Java (syntax highlighting)
+│   ├── Font: JetBrains Mono
+│   └── Features: Bracket-pair coloring, line highlight, smooth cursor
+│
+├── 🌳 ASTTreeView Component (Recursive)
+│   ├── node.type      -> Cyan Label
+│   ├── node.name      -> Orange identifier
+│   ├── node.javaType  -> Subscript type annotation (e.g. ": int")
+│   ├── node.value     -> Green literal representation
+│   └── node.op        -> Red operator representation
+│
+└── 📑 Output Tabs Interface
+    ├── Output     # Monospace generated target code
+    ├── Errors     # Compilation error list with line details
+    ├── Tokens     # High-density lexical token grid
+    ├── AST        # Recursive tree view of the parsed AST
+    └── Symbols    # Interactive symbol table view
 ```
 
 ---
 
-## 13. Backend API
+## 🔌 13. Backend API
 
 ### `POST /transpile`
 
-**Request body:**
+**Request Payload:**
 ```json
-{ "code": "public class Hello { ... }", "target": "python" }
+{ 
+  "code": "public class Hello { public static void main(String[] args) { System.out.println(\"Hello World\"); } }", 
+  "target": "python" 
+}
 ```
 
-**Success response:**
+**Success JSON Response:**
 ```json
 {
   "success": true,
@@ -928,55 +919,65 @@ App.jsx
   ],
   "ast": {
     "type": "Program",
-    "items": [{ "type": "ClassDecl", "name": "Hello", "..." : "..." }]
+    "items": [{ "type": "ClassDecl", "name": "Hello" }]
   },
   "symbols": [
-    { "name": "Hello", "type": "class", "javaType": "class",
-      "params": 0, "line": 1 }
+    { "name": "Hello", "type": "class", "javaType": "class", "params": 0, "line": 1 }
   ],
   "errors": [],
-  "output": "class Hello:\n    def main():\n        ...\n"
+  "output": "class Hello:\n    def main():\n        print(\"Hello World\")\n"
 }
 ```
 
-**Failure response:**
+**Failure JSON Response:**
 ```json
 {
   "success": false,
-  "errors": [{ "line": 3, "message": "Undeclared identifier 'x'" }],
+  "errors": [
+    { "line": 3, "message": "Undeclared identifier 'x'" }
+  ],
   "output": null
 }
 ```
 
 ### `GET /health`
 
+**Response:**
 ```json
-{ "status": "ok", "mode": "javascript" }
-```
-
-### Binary vs JS Fallback Logic
-
-```
-POST /transpile arrives
-       │
-       ▼
-compiler/transpiler.exe  exists?
-       │
-      YES ─────────────────────────────────▶ execFile(binary,
-       │                                      ["--json","--target",target,
-       │                                        tmpfile])
-       │                                     parse stdout as JSON
-      NO
-       │
-       ▼
-require('./transpiler.js')
-transpile(code, target)
-       │
-       ▼
-JSON response to frontend
+{ 
+  "status": "ok", 
+  "mode": "javascript" 
+}
 ```
 
 ---
 
-*TranspilerX — Java to C/Python Transpiler*
-*Stack: Flex + Bison + C | Express.js | React + Monaco Editor*
+### 🔀 Binary vs JS Fallback Execution Path
+
+```mermaid
+graph TD
+    classDef request fill:#1e1e2e,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4;
+    classDef decision fill:#313244,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4;
+    classDef process fill:#181825,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
+    
+    req([POST /transpile Request]) --> check{"Check for transpiler.exe"}
+    
+    check -->|"Exists"| exec["Spawn native subprocess<br/>execFile('./transpiler.exe --json')"]
+    check -->|"Not Found"| js["Require pure JS implementation<br/>transpiler.js"]
+    
+    exec --> format["Compile & return JSON response"]
+    js --> format
+    
+    format --> res([Response sent to Frontend])
+
+    class req,res request;
+    class check decision;
+    class exec,js,format process;
+```
+
+---
+
+<p align="center">
+  <b>TranspilerX — Java to C/Python Transpiler</b><br>
+  <i>Built with Flex, Bison, C, Express.js, React, and Monaco Editor.</i>
+</p>
